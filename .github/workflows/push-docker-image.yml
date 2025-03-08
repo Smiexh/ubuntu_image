@@ -1,0 +1,36 @@
+name: Push Docker Image to Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull Docker image
+        run: docker pull ubuntu:22.04
+
+      - name: Save Docker image as tar
+        run: docker save -o ubuntu-22.04.tar ubuntu:22.04
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 22.04
+          release_name: Ubuntu 22.04
+          draft: false
+          prerelease: false
+
+      - name: Upload Docker image to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ubuntu-22.04.tar
+          asset_name: ubuntu-22.04.tar
+          asset_content_type: application/x-tar
