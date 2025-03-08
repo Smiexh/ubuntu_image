@@ -2,8 +2,6 @@ name: Export and Upload Docker Image
 
 on:
   workflow_dispatch:
-  release:
-    types: [created]
 
 jobs:
   export_image:
@@ -21,12 +19,23 @@ jobs:
         run: |
           docker save -o exported-image.tar exported-image:latest
 
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0
+          release_name: Exported Docker Image v1.0.0
+          draft: false
+          prerelease: false
+
       - name: Upload Docker image to Release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./exported-image.tar
           asset_name: ubuntu-22.04-image.tar
           asset_content_type: application/x-tar
